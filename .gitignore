@@ -1,0 +1,28 @@
+# Local runtime config and secrets
+config.ini
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# macOS / editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Local scrape outputs and working data
+db/
+checkout/
+html/
+archives/
+input.csv
+out.csv
+*.log
+
+# Local Selenium / browser leftovers
+*.crdownload
