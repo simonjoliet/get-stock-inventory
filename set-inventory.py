@@ -63,6 +63,95 @@ def set_input_value(driver, element, value):
         str(value),
     )
 
+
+def get_input_value(driver, element):
+    return driver.execute_script("return arguments[0].value;", element)
+
+
+def set_input_value_with_verification(driver, element, value, attempts=3):
+    expected = str(value)
+
+    for _ in range(attempts):
+        set_input_value(driver, element, expected)
+        element.send_keys(Keys.SPACE, Keys.BACKSPACE)
+        if get_input_value(driver, element) == expected:
+            return True
+
+    return False
+
+
+def adobe_title_already_matches(driver, expected_title):
+    expected = str(expected_title)
+    cells = driver.find_elements(By.CLASS_NAME, "container-table-cell")
+
+    for cell in cells:
+        if not cell.is_displayed():
+            continue
+
+        cell_text = driver.execute_script(
+            "return arguments[0].textContent;", cell
+        )
+        if cell_text == expected:
+            return True
+
+    return False
+
+
+def get_adobe_title_cell(driver):
+    visible_cells = [
+        cell
+        for cell in driver.find_elements(By.CLASS_NAME, "container-table-cell")
+        if cell.is_displayed()
+    ]
+
+    if len(visible_cells) < 3:
+        raise Exception("Could not find the third visible Adobe title cell")
+
+    return visible_cells[2]
+
+
+def click_adobe_title_edit_without_hover(driver, timeout):
+    title_cell = get_adobe_title_cell(driver)
+    pencil_selector = (
+        'button.button.button--floating.editable__pencil.margin-left-small'
+        '[data-t="portfolio-detail-panel-title-edit"]'
+    )
+    deadline = time.time() + timeout
+    last_error = None
+
+    while time.time() < deadline:
+        try:
+            driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+                title_cell,
+            )
+            clicked = driver.execute_script(
+                """
+                const selector = arguments[0];
+                const cell = arguments[1];
+                const pencil = document.querySelector(selector);
+                if (pencil) {
+                    pencil.click();
+                    return true;
+                }
+
+                cell.click();
+                return false;
+                """,
+                pencil_selector,
+                title_cell,
+            )
+            if clicked:
+                return
+        except Exception as exc:
+            last_error = exc
+
+        time.sleep(0.3)
+
+    if last_error is not None:
+        raise last_error
+    raise TimeoutException("Adobe title edit control was not clickable without hover")
+
 def parse_csv(file_path):
     items = []
     with open(file_path, newline="", encoding="utf-8") as f:
@@ -104,23 +193,21 @@ def update_adobe_asset(driver, asset_id, title, app_config):
         )
         thumb.click()
 
-        log("  ├ Hovering to reveal edit button...")
+        log("  ├ Checking current title...")
         time.sleep(settings["reveal_edit_wait_seconds"])
+        if adobe_title_already_matches(driver, title):
+            log("  └ Skipping: title already matches")
+            return None
 
-        container = stock_logins.wait_clickable(driver, By.CLASS_NAME, "editable", timeout)
-        container.click()
-
-        log("  ├ Clicking edit...")
-        edit_btn = stock_logins.wait_clickable(
-            driver, By.CLASS_NAME, "editable__pencil", timeout
-        )
-        edit_btn.click()
+        log("  ├ Opening title editor...")
+        click_adobe_title_edit_without_hover(driver, timeout)
 
         log("  ├ Updating title...")
         time.sleep(settings["edit_input_wait_seconds"])
-        input_field = driver.find_element(By.CLASS_NAME, "input--full")
-        input_field.clear()
-        input_field.send_keys(title)
+        input_field = stock_logins.wait_clickable(driver, By.CLASS_NAME, "input--full", timeout)
+        if not set_input_value_with_verification(driver, input_field, title):
+            raise Exception("Failed to set Adobe title input reliably")
+        input_field.send_keys(Keys.SPACE, Keys.BACKSPACE)
 
         log("  ├ Saving...")
         save_btn = stock_logins.wait_clickable(
@@ -244,18 +331,21 @@ def main():
         log(f"\nLoaded {len(tasks)} tasks")
 
         success = 0
+        skipped = 0
         for asset_id, value in tasks:
             if args.adobe:
                 updated = update_adobe_asset(driver, asset_id, value, app_config)
             else:
                 updated = update_shutterstock_asset(driver, asset_id, value, app_config)
 
-            if updated:
+            if updated is None:
+                skipped += 1
+            elif updated:
                 success += 1
 
             time.sleep(app_config["set_inventory"]["between_assets_wait_seconds"])
 
-        log(f"\nFinished: {success}/{len(tasks)} successful")
+        log(f"\nFinished: {success}/{len(tasks)} successful, {skipped} skipped")
     finally:
         driver.quit()
 
