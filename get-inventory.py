@@ -11,7 +11,6 @@ from urllib.parse import unquote
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 
-
 def load_stock_logins_module():
     module_path = Path(__file__).with_name("stock-logins.py")
     spec = importlib.util.spec_from_file_location("stock_logins_runtime", module_path)
@@ -19,13 +18,10 @@ def load_stock_logins_module():
     spec.loader.exec_module(module)
     return module
 
-
 stock_logins = load_stock_logins_module()
-
 
 def log(msg):
     print(msg, file=sys.stderr, flush=True)
-
 
 def load_page(driver, url, app_config):
     scraping = app_config["scraping"]
@@ -40,7 +36,6 @@ def load_page(driver, url, app_config):
             time.sleep(scraping["retry_delay_seconds"])
 
     raise Exception(f"Failed to load {url}")
-
 
 def is_next_disabled(driver):
     try:
@@ -57,7 +52,6 @@ def is_next_disabled(driver):
 
     return False
 
-
 def extract_adobe(content):
     pattern = r'%22%2C%22original_name%22%3A%22(.*?)%22%2C%22.*?F220_F_(.*?)_.*?title%22%3A%22(.*?)%22%2C%22'
     matches = re.findall(pattern, content)
@@ -67,7 +61,6 @@ def extract_adobe(content):
 
     return len(matches)
 
-
 def extract_shutterstock(content):
     pattern = r'aria-label="select\ asset\ ([^"]+\.(?:jpg|JPG)).*?<img[^>]+src="[^"]*?-([0-9]{10})\.(?:jpg|JPG)[^"]*"[^>]+alt="([^"]+)"'
     matches = re.findall(pattern, content, re.DOTALL)
@@ -76,7 +69,6 @@ def extract_shutterstock(content):
         print(f'Shutterstock,{filename},{asset_id},"{html.unescape(title)}"')
 
     return len(matches)
-
 
 def run_scraper(driver, url_template, extractor, app_config, max_pages=None):
     page = 1
@@ -105,7 +97,6 @@ def run_scraper(driver, url_template, extractor, app_config, max_pages=None):
         page += 1
         time.sleep(app_config["scraping"]["page_delay_seconds"])
 
-
 def parse_files(file_patterns, extractor):
     files = []
     for pattern in file_patterns:
@@ -121,13 +112,11 @@ def parse_files(file_patterns, extractor):
 
         extractor(content)
 
-
 def run_from_files(args):
     if args.adobe:
         parse_files(args.file, extract_adobe)
     elif args.shutterstock:
         parse_files(args.file, extract_shutterstock)
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -177,7 +166,6 @@ def main():
 
     driver.quit()
     log("\nDone.")
-
 
 if __name__ == "__main__":
     main()

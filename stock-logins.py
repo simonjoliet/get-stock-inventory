@@ -20,7 +20,7 @@ def default_log(msg):
 
 def load_config():
     parser = configparser.ConfigParser()
-    config_path = Path(CONFIG_FILE)
+    config_path = Path(__file__).resolve().parent / CONFIG_FILE
 
     if not config_path.is_file():
         raise FileNotFoundError(
@@ -67,6 +67,12 @@ def load_config():
             "google_continue_timeout_seconds": parser.getfloat(
                 "adobe", "google_continue_timeout_seconds"
             ),
+            "manual_login_timeout_seconds": parser.getfloat(
+                "adobe", "manual_login_timeout_seconds"
+            ),
+            "manual_login_poll_seconds": parser.getfloat(
+                "adobe", "manual_login_poll_seconds"
+            ),
         },
         "set_inventory": {
             "portfolio_url": parser.get("set_inventory", "portfolio_url"),
@@ -104,6 +110,22 @@ def wait_for(driver, by, selector, timeout):
 def wait_clickable(driver, by, selector, timeout):
     return WebDriverWait(driver, timeout).until(
         EC.element_to_be_clickable((by, selector))
+    )
+
+
+def wait_for_adobe_manual_login(driver, settings):
+    return WebDriverWait(
+        driver,
+        settings["manual_login_timeout_seconds"],
+        poll_frequency=settings["manual_login_poll_seconds"],
+    ).until(
+        EC.presence_of_element_located(
+            (
+                By.XPATH,
+                "//span[contains(@class, 'time-frame-select__label') "
+                "and normalize-space()='Time Frame']",
+            )
+        )
     )
 
 
@@ -166,5 +188,5 @@ def login_adobe(driver, app_config, logger=None, start_url=None):
     except TimeoutException:
         pass
 
-    logger("\nComplete Google login (password, 2FA, etc.), then press ENTER...\n")
-    input()
+    logger("Waiting for Adobe login to complete in the browser...")
+    wait_for_adobe_manual_login(driver, settings)

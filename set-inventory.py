@@ -19,25 +19,20 @@ def load_stock_logins_module():
     spec.loader.exec_module(module)
     return module
 
-
 stock_logins = load_stock_logins_module()
-
 
 def log(msg):
     print(msg, file=sys.stderr, flush=True)
-
 
 def wait_for_visible_css(driver, selector, timeout):
     return WebDriverWait(driver, timeout).until(
         EC.visibility_of_element_located((By.CSS_SELECTOR, selector))
     )
 
-
 def wait_for_all_visible_css(driver, selector, timeout):
     return WebDriverWait(driver, timeout).until(
         lambda d: [el for el in d.find_elements(By.CSS_SELECTOR, selector) if el.is_displayed()]
     )
-
 
 def set_input_value(driver, element, value):
     driver.execute_script(
@@ -68,7 +63,6 @@ def set_input_value(driver, element, value):
         str(value),
     )
 
-
 def parse_csv(file_path):
     items = []
     with open(file_path, newline="", encoding="utf-8") as f:
@@ -88,7 +82,6 @@ def parse_csv(file_path):
                 continue
             items.append((asset_id, value))
     return items
-
 
 def update_adobe_asset(driver, asset_id, title, app_config):
     log(f"\nProcessing asset {asset_id}")
@@ -149,7 +142,6 @@ def update_adobe_asset(driver, asset_id, title, app_config):
 
     return True
 
-
 def update_shutterstock_asset(driver, asset_id, value, app_config):
     log(f"\nProcessing asset {asset_id}")
     timeout = app_config["selenium"]["timeout_seconds"]
@@ -203,7 +195,6 @@ def update_shutterstock_asset(driver, asset_id, value, app_config):
         return False
 
     return True
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -267,7 +258,6 @@ def main():
         log(f"\nFinished: {success}/{len(tasks)} successful")
     finally:
         driver.quit()
-
 
 if __name__ == "__main__":
     main()

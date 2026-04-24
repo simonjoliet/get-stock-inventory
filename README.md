@@ -59,53 +59,53 @@ Override any of those values in `config.ini` if you need different behavior loca
 Scrape Shutterstock:
 
 ```bash
-python get-stock-inventory.py --shutterstock
+python get-inventory.py --shutterstock
 ```
 
 Scrape Adobe:
 
 ```bash
-python get-stock-inventory.py --adobe
+python get-inventory.py --adobe
 ```
 
 Limit the number of scraped pages:
 
 ```bash
-python get-stock-inventory.py --shutterstock --page 3
+python get-inventory.py --shutterstock --page 3
 ```
 
 Parse local HTML files without logging in:
 
 ```bash
-python get-stock-inventory.py --shutterstock --file index.html
-python get-stock-inventory.py --adobe --file *.html
+python get-inventory.py --shutterstock --file index.html
+python get-inventory.py --adobe --file *.html
 ```
 
 Update one Adobe asset title:
 
 ```bash
-python set-stock-inventory.py --adobe --asset 123456789 --title "Updated title"
+python set-inventory.py --adobe --asset 123456789 --title "Updated title"
 ```
 
 Update one Shutterstock asset title:
 
 ```bash
-python set-stock-inventory.py --shutterstock --asset 1234567890 --value "Updated title"
+python set-inventory.py --shutterstock --asset 1234567890 --value "Updated title"
 ```
 
 Update Adobe asset titles from CSV:
 
 ```bash
-python set-stock-inventory.py --adobe --file input.csv
+python set-inventory.py --adobe --file input.csv
 ```
 
 Update Shutterstock asset titles from CSV:
 
 ```bash
-python set-stock-inventory.py --shutterstock --file input.csv
+python set-inventory.py --shutterstock --file input.csv
 ```
 
-The CSV format for `set-stock-inventory.py` is:
+The CSV format for `set-inventory.py` is:
 
 ```text
 asset_id,title
@@ -116,7 +116,7 @@ asset_id,title
 
 ## Output
 
-`get-stock-inventory.py` prints CSV to stdout:
+`get-inventory.py` prints CSV to stdout:
 
 ```text
 platform,filename,asset_id,title
@@ -127,12 +127,12 @@ Adobe,image.jpg,9876543210,"Title"
 Example redirect:
 
 ```bash
-python get-stock-inventory.py --shutterstock > shutterstockdb.csv
+python get-inventory.py --shutterstock > shutterstockdb.csv
 ```
 
 ## Notes
 
-- Adobe login still requires manual completion of Google authentication and 2FA, then pressing `ENTER`
+- Adobe login still requires manual completion of Google authentication and 2FA; the script waits for the portfolio page to appear automatically
 - File mode skips browser login entirely
 - The scripts depend on the current site HTML and Selenium selectors
 - Use responsibly and respect platform terms
